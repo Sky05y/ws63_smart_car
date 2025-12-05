@@ -22,6 +22,8 @@ endif()
 
 add_subdirectory_if_exist(custom)
 
+add_subdirectory_if_exist(smart_car)
+
 set(PRIVATE_HEADER
 )
 
