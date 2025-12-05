@@ -9,7 +9,7 @@
 
 #ifndef PWM_H
 #define PWM_H
-
+#define CONFIG_PWM_USING_V150
 #include <stdint.h>
 #include <stdbool.h>
 #include "errcode.h"

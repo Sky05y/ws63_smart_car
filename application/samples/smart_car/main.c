@@ -11,21 +11,17 @@ static void *main_task(const char *arg)
     motor_init();          // 初始化 PWM 电机驱动
     while(1){
     // 设置速度
-    set_left_speed(30);
-    set_right_speed(30);
-    uapi_tcxo_delay_ms(2000);
+    set_left_speed(40);
+    set_right_speed(40);
+    uapi_tcxo_delay_ms(1000);
 
-    set_left_speed(60);
-    set_right_speed(60);
-    uapi_tcxo_delay_ms(2000);
-
-    set_left_speed(100);
-    set_right_speed(100);
-    uapi_tcxo_delay_ms(2000);
+    set_left_speed(80);
+    set_right_speed(80);
+    uapi_tcxo_delay_ms(1000);
 
     set_left_speed(0);
     set_right_speed(0);
-    uapi_tcxo_delay_ms(2000);
+    uapi_tcxo_delay_ms(3000);
     }
     return NULL;
 }

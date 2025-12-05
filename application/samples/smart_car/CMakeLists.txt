@@ -9,3 +9,5 @@
 
     set(SOURCES "${SOURCES_LIST}" PARENT_SCOPE)
     set(PUBLIC_HEADER "${PUBLIC_HEADER_LIST}" PARENT_SCOPE)
+
+    add_compile_definitions(CONFIG_PWM_USING_V150)

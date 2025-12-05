@@ -6,7 +6,7 @@
  * History: \n
  * 2022-09-16， Create file. \n
  */
-
+#define CONFIG_PWM_USING_V150
 #include "common_def.h"
 #include "osal_interrupt.h"
 #include "hal_pwm.h"
