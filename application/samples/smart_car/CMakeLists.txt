@@ -1,5 +1,6 @@
     set(SOURCES_LIST
         ${CMAKE_CURRENT_SOURCE_DIR}/main.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/motor.c
     )
 
     set(PUBLIC_HEADER_LIST
