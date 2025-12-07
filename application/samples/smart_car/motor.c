@@ -38,8 +38,8 @@ void motor_init(void)
     return;
     }
     // 默认全 0%
-    cfg_left.low_time  = PWM_TOTAL_COUNT;
-    cfg_left.high_time = 0;
+    cfg_left.low_time  = PWM_TOTAL_COUNT-1;
+    cfg_left.high_time = 1;
     cfg_left.offset_time = 0;
     cfg_left.cycles = 0;
     cfg_left.repeat = true;
@@ -65,6 +65,10 @@ void motor_init(void)
     uapi_tcxo_delay_ms(100);
     // uapi_pwm_close(PWM_GROUP_ID1);
     // uapi_pwm_close(PWM_GROUP_ID2);
+
+    uapi_pwm_start(PWM_LEFT_GPIO);
+    uapi_pwm_start(PWM_RIGHT_GPIO);
+
     printf("motor init start done\n");
 
 }
@@ -84,7 +88,7 @@ void set_left_speed(uint8_t speed)
         .repeat = true
     };
 
-    printf("set left speed: %d%% -> high=%u low=%u\n", speed, high, low);
+    // osal_printk("set left speed: %d%% -> high=%u low=%u\n", speed, high, low);
 
     // uapi_pwm_open(PWM_LEFT_CHANNEL, &cfg);   // 自动覆盖旧配置
     errcode_t ret = uapi_pwm_update_duty_ratio(PWM_LEFT_CHANNEL, low, high);
@@ -109,7 +113,7 @@ void set_right_speed(uint8_t speed)
         .repeat = true
     };
 
-    printf("set right speed: %d%% -> high=%u low=%u\n", speed, high, low);
+    // printf("set right speed: %d%% -> high=%u low=%u\n", speed, high, low);
 
     // uapi_pwm_open(PWM_RIGHT_CHANNEL, &cfg);
     uapi_pwm_update_duty_ratio(PWM_RIGHT_CHANNEL, low, high);
