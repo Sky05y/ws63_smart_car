@@ -11,22 +11,50 @@ static void *main_task(const char *arg)
 
     motor_init();          // 初始化 PWM 电机驱动
     track_init(7);
+    track_init(8);
+    track_init(9);
+    track_init(10);
     // 设置速度
     set_left_speed(40);
     set_right_speed(40);
     while(1){
-        if(get_track_status(7))
+        if(get_track_status(7)==0 && get_track_status(8)==0 && get_track_status(9)==0 && get_track_status(10)==0)
         {
-            printf("Track detected HIGH\n");
-            set_left_speed(20);
-            set_right_speed(20);
+            printf("forward\n");
+            set_left_speed(40);
+            set_right_speed(40);
         }
-        else
+        else if (get_track_status(7) == 1 && get_track_status(8) == 1 && get_track_status(9) == 1 && get_track_status(10) == 1)
         {
-            printf("Track detected LOW\n");
-            set_left_speed(70);
+            printf("stop\n");
+            set_left_speed(0);
+            set_right_speed(0);
+        }
+        else if (get_track_status(7) == 0 && get_track_status(8) == 1 && get_track_status(9) == 0 && get_track_status(10) == 0)
+        {
+            printf("minor_left\n");
+            set_left_speed(30);
+            set_right_speed(50);
+        }
+        else if (get_track_status(7) == 0 && get_track_status(8) == 0 && get_track_status(9) == 1 && get_track_status(10) == 0)
+        {
+            printf("minor_right\n");
+            set_left_speed(50);
+            set_right_speed(30);
+        }
+        else if(get_track_status(7)==1)
+        {
+            printf("left\n");
+            set_left_speed(15);
             set_right_speed(70);
         }
+        else if(get_track_status(10)==1)
+        {
+            printf("right\n");
+            set_left_speed(70);
+            set_right_speed(15);
+        }
+        // osDelay(100);
     }
     return NULL;
 }
