@@ -4,57 +4,119 @@
 #include "tcxo.h"
 #include "pinctrl.h"
 #include "track.h"
+#include "bluetooth.h"
 
 static void *main_task(const char *arg)
 {
     UNUSED(arg);
 
-    motor_init();          // 初始化 PWM 电机驱动
-    track_init(7);
-    track_init(8);
+    motor_init();          // 初始化PWM电机驱动
     track_init(9);
     track_init(10);
+    track_init(11);
+    track_init(12);        // 初始化红外循迹传感器
+
+    usr_uart_io_config();     // 配置UART引脚
+    usr_uart_init_config();   // 初始化UART
     // 设置速度
-    set_left_speed(40);
-    set_right_speed(40);
+    set_left_speed(50);
+    set_right_speed(50);
+    osDelay(2000);
+    set_left_speed(0);
+    set_right_speed(0);    
     while(1){
-        if(get_track_status(7)==0 && get_track_status(8)==0 && get_track_status(9)==0 && get_track_status(10)==0)
-        {
-            printf("forward\n");
-            set_left_speed(40);
-            set_right_speed(40);
+        int* p = usr_uart_read_data();   // 读取UART数据
+        // p[0] 是 X 坐标，p[1] 是 Y 坐标
+        int x = p[0];   // 0~100
+        int y = p[1];   // 0~100
+
+        // 摇杆中心在（50,50）
+        const int center = 50;
+
+        // 范围：-50 ~ +50
+        int dx = x - center;   // 左右
+        int dy = y - center;   // 前后
+
+        // ===============================
+        //  1) 前后速度：根据 Y 控制基础速度
+        // ===============================
+        int base_speed = dy;  // -50 ~ +50
+
+        // 归一化为电机速度（示例最大 70）
+        int max_speed = 70;
+        int forward_speed = (base_speed * max_speed) / 50;  // 映射比例
+        // forward_speed 取值范围 -70 ~ +70
+
+        // ===============================
+        //  2) 转向控制：根据 X 调整左右速度差
+        // ===============================
+        int turn = dx;  // -50 ~ +50
+
+        // 转向强度，也做一个比例映射
+        int turn_strength = (turn * max_speed) / 50; // -70 ~ +70
+
+        // ===============================
+        //  3) 组合左右轮速度
+        // ===============================
+        int left_speed  = forward_speed - turn_strength;  
+        int right_speed = forward_speed + turn_strength;
+
+        // 限幅，防止超过电机最大速度
+        if (left_speed > max_speed) left_speed = max_speed;
+        if (left_speed < -max_speed) left_speed = -max_speed;
+        if (right_speed > max_speed) right_speed = max_speed;
+        if (right_speed < -max_speed) right_speed = -max_speed;
+
+        // ===============================
+        // 4) 摇杆在中间：速度归零
+        // ===============================
+        if (abs(dx) < 5 && abs(dy) < 5) {
+            left_speed = 0;
+            right_speed = 0;
         }
-        else if (get_track_status(7) == 1 && get_track_status(8) == 1 && get_track_status(9) == 1 && get_track_status(10) == 1)
-        {
-            printf("stop\n");
-            set_left_speed(0);
-            set_right_speed(0);
-        }
-        else if (get_track_status(7) == 0 && get_track_status(8) == 1 && get_track_status(9) == 0 && get_track_status(10) == 0)
-        {
-            printf("minor_left\n");
-            set_left_speed(30);
-            set_right_speed(50);
-        }
-        else if (get_track_status(7) == 0 && get_track_status(8) == 0 && get_track_status(9) == 1 && get_track_status(10) == 0)
-        {
-            printf("minor_right\n");
-            set_left_speed(50);
-            set_right_speed(30);
-        }
-        else if(get_track_status(7)==1)
-        {
-            printf("left\n");
-            set_left_speed(15);
-            set_right_speed(70);
-        }
-        else if(get_track_status(10)==1)
-        {
-            printf("right\n");
-            set_left_speed(70);
-            set_right_speed(15);
-        }
-        // osDelay(100);
+
+        // ===============================
+        // 5) 输出速度
+        // ===============================
+        set_left_speed(left_speed);
+        set_right_speed(right_speed);
+        // if(get_track_status(9)==0 && get_track_status(10)==0 && get_track_status(11)==0 && get_track_status(12)==0)
+        // {
+        //     printf("forward\n");
+        //     set_left_speed(40);
+        //     set_right_speed(40);
+        // }
+        // else if (get_track_status(9) == 1 && get_track_status(10) == 1 && get_track_status(11) == 1 && get_track_status(12) == 1)
+        // {
+        //     printf("stop\n");
+        //     set_left_speed(0);
+        //     set_right_speed(0);
+        // }
+        // else if (get_track_status(9) == 0 && get_track_status(10) == 1 && get_track_status(11) == 0 && get_track_status(12) == 0)
+        // {
+        //     printf("minor_left\n");
+        //     set_left_speed(30);
+        //     set_right_speed(50);
+        // }
+        // else if (get_track_status(9) == 0 && get_track_status(10) == 0 && get_track_status(11) == 1 && get_track_status(12) == 0)
+        // {
+        //     printf("minor_right\n");
+        //     set_left_speed(50);
+        //     set_right_speed(30);
+        // }
+        // else if(get_track_status(9)==1)
+        // {
+        //     printf("left\n");
+        //     set_left_speed(15);
+        //     set_right_speed(70);
+        // }
+        // else if(get_track_status(12)==1)
+        // {
+        //     printf("right\n");
+        //     set_left_speed(70);
+        //     set_right_speed(15);
+        // }
+        osDelay(50);
     }
     return NULL;
 }

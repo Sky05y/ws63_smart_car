@@ -472,6 +472,7 @@ errcode_t uapi_uart_init(uart_bus_t bus, const uart_pin_config_t *pins, const ua
 {
     unused(uart_buffer_config);
     if (uart_init_check_params(bus, pins, attr) != 0) {
+        printf("uapi_uart_init: invalid parameters\n");
         return ERRCODE_INVALID_PARAM;
     }
     if (g_uart_inited[bus]) { return ERRCODE_SUCC; }
@@ -1166,14 +1167,17 @@ errcode_t uapi_uart_resume(uintptr_t arg)
 static int32_t uart_check_params_attr(const uart_attr_t *attr)
 {
     if (attr == NULL || attr->data_bits > UART_DATA_BIT_8) {
+        printf("uart_check_params_attr: invalid attr or data_bits\n");
         return -1;
     }
 
     if (attr->parity > UART_PARITY_EVEN) {
+        printf("uart_check_params_attr: invalid parity\n");
         return -1;
     }
 
     if (attr->stop_bits != UART_STOP_BIT_1 && attr->stop_bits != UART_STOP_BIT_2) {
+        printf("uart_check_params_attr: invalid stop_bits\n");
         return -1;
     }
 
@@ -1183,6 +1187,7 @@ static int32_t uart_check_params_attr(const uart_attr_t *attr)
 static int32_t uart_init_check_params(uart_bus_t bus, const uart_pin_config_t *pins, const uart_attr_t *attr)
 {
     if (bus >= UART_BUS_MAX_NUM || pins == NULL) {
+        printf("uart_init_check_params: invalid bus or pins\n");
         return -1;
     }
 

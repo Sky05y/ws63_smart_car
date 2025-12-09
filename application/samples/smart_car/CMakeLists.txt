@@ -2,6 +2,7 @@
         ${CMAKE_CURRENT_SOURCE_DIR}/main.c
         ${CMAKE_CURRENT_SOURCE_DIR}/motor.c
         ${CMAKE_CURRENT_SOURCE_DIR}/track.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/bluetooth.c
     )
 
     set(PUBLIC_HEADER_LIST
