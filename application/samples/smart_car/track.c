@@ -11,8 +11,8 @@ void gpio_callback_func(pin_t pin, uintptr_t param)
 
 errcode_t track_init(pin_t pin)
 {
-    uapi_pin_init();  
-    uapi_gpio_init(); 
+    uapi_pin_init();
+    uapi_gpio_init();
     uapi_pin_set_mode(pin, HAL_PIO_FUNC_GPIO);
     uapi_gpio_set_dir(pin, GPIO_DIRECTION_INPUT);
     if(uapi_gpio_register_isr_func(pin, GPIO_INTERRUPT_RISING_EDGE, gpio_callback_func) != ERRCODE_SUCC)

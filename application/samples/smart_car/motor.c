@@ -3,10 +3,12 @@
 #include "pinctrl.h"
 #include "osal_debug.h"
 #include "tcxo.h"
+#include "gpio.h"
 
 #define PWM_LEFT_GPIO      1
 #define PWM_RIGHT_GPIO     2
-#define PWM_PIN_MODE       1
+#define PWM_PIN_MODE1       1
+#define PWM_PIN_MODE2       1
 
 #define PWM_GROUP_ID1               1
 #define PWM_GROUP_ID2               2
@@ -28,11 +30,13 @@ static errcode_t pwm_sample_callback(uint8_t channel)
 
 void motor_init(void)
 {
-    uapi_pin_set_mode(PWM_LEFT_GPIO, PWM_PIN_MODE);
-    uapi_pin_set_mode(PWM_RIGHT_GPIO, PWM_PIN_MODE);
-
+    errcode_t ret;
+    ret = uapi_pin_set_mode(PWM_LEFT_GPIO, PWM_PIN_MODE1);
+    printf("set left pin mode ret=%d\n", ret);
+    ret = uapi_pin_set_mode(PWM_RIGHT_GPIO, PWM_PIN_MODE2);
+    printf("set right pin mode ret=%d\n", ret);
     uapi_pwm_deinit();
-    errcode_t ret = uapi_pwm_init();
+    ret = uapi_pwm_init();
     if (ret != ERRCODE_SUCC) {
     printf("PWM init fail %d\n", ret);
     return;
@@ -46,8 +50,8 @@ void motor_init(void)
 
     cfg_right = cfg_left;
     uapi_pwm_open(PWM_LEFT_CHANNEL, &cfg_left);
-    uapi_pwm_open(PWM_RIGHT_CHANNEL, &cfg_right);
-
+    ret = uapi_pwm_open(PWM_RIGHT_CHANNEL, &cfg_right);
+    printf("PWM open ret=%d\n", ret);
     uapi_tcxo_delay_ms(100);
     printf("motor init delay done\n");
     // 必须启动
@@ -57,8 +61,6 @@ void motor_init(void)
 
     uapi_pwm_set_group(PWM_GROUP_ID1, &channel_id1, 1);
     uapi_pwm_set_group(PWM_GROUP_ID2, &channel_id2, 1);
-
-    printf("wait03\n");
 
     uapi_pwm_start_group(PWM_GROUP_ID1);
     uapi_pwm_start_group(PWM_GROUP_ID2);
@@ -71,10 +73,24 @@ void motor_init(void)
 
     printf("motor init start done\n");
 
+    // GPIO Init start
+
+
 }
 
-void set_left_speed(uint8_t speed)
+void set_left_speed(int8_t speed)
 {
+    // if(speed > 0)
+    // {
+    //     uapi_gpio_set_val(5, GPIO_LEVEL_LOW);  // BIN2
+    //     uapi_gpio_set_val(4, GPIO_LEVEL_HIGH);  // BIN1 -> 左轮
+    // }
+    // else
+    // {
+    //     uapi_gpio_set_val(4, GPIO_LEVEL_LOW);  // BIN1
+    //     uapi_gpio_set_val(5, GPIO_LEVEL_HIGH);  // BIN2 -> 左轮
+    //     speed = -speed;
+    // }
     if (speed > 100) speed = 100;
 
     uint32_t high = speed * 10;         // high + low = 1000
@@ -98,8 +114,19 @@ void set_left_speed(uint8_t speed)
     uapi_pwm_start_group(PWM_GROUP_ID1);
 }
 
-void set_right_speed(uint8_t speed)
+void set_right_speed(int8_t speed)
 {
+    // if (speed > 0)
+    // {
+    //     uapi_gpio_set_val(8, GPIO_LEVEL_LOW);  // AIN1
+    //     uapi_gpio_set_val(7, GPIO_LEVEL_HIGH);  // AIN2 -> 右轮
+    // }
+    // else
+    // {
+    //     uapi_gpio_set_val(7, GPIO_LEVEL_LOW);  // AIN2
+    //     uapi_gpio_set_val(8, GPIO_LEVEL_HIGH);  // AIN1 -> 右轮
+    //     speed = -speed;
+    // }
     if (speed > 100) speed = 100;
 
     uint32_t high = speed * 10;
