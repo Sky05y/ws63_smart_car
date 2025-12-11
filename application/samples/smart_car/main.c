@@ -66,6 +66,9 @@ static void *main_task(const char *arg)
         set_left_speed(0);
         set_right_speed(0);   
         osDelay(300);
+        set_left_speed(-50);
+        set_right_speed(-50);
+        osDelay(300);  
     }
     // while(1){
     //     int* p = usr_uart_read_data();   // 读取UART数据

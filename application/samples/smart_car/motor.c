@@ -80,17 +80,17 @@ void motor_init(void)
 
 void set_left_speed(int8_t speed)
 {
-    // if(speed > 0)
-    // {
-    //     uapi_gpio_set_val(5, GPIO_LEVEL_LOW);  // BIN2
-    //     uapi_gpio_set_val(4, GPIO_LEVEL_HIGH);  // BIN1 -> 左轮
-    // }
-    // else
-    // {
-    //     uapi_gpio_set_val(4, GPIO_LEVEL_LOW);  // BIN1
-    //     uapi_gpio_set_val(5, GPIO_LEVEL_HIGH);  // BIN2 -> 左轮
-    //     speed = -speed;
-    // }
+    if(speed > 0)
+    {
+        uapi_gpio_set_val(7, GPIO_LEVEL_HIGH);  // BIN1 -> 左轮
+        uapi_gpio_set_val(8, GPIO_LEVEL_LOW);  // BIN1 -> 左轮
+    }
+    else
+    {
+        uapi_gpio_set_val(8, GPIO_LEVEL_HIGH);  // BIN1
+        uapi_gpio_set_val(7, GPIO_LEVEL_LOW);  // BIN2 -> 左轮
+        speed = -speed;
+    }
     if (speed > 100) speed = 100;
 
     uint32_t high = speed * 10;         // high + low = 1000
@@ -116,17 +116,18 @@ void set_left_speed(int8_t speed)
 
 void set_right_speed(int8_t speed)
 {
-    // if (speed > 0)
-    // {
-    //     uapi_gpio_set_val(8, GPIO_LEVEL_LOW);  // AIN1
-    //     uapi_gpio_set_val(7, GPIO_LEVEL_HIGH);  // AIN2 -> 右轮
-    // }
-    // else
-    // {
-    //     uapi_gpio_set_val(7, GPIO_LEVEL_LOW);  // AIN2
-    //     uapi_gpio_set_val(8, GPIO_LEVEL_HIGH);  // AIN1 -> 右轮
-    //     speed = -speed;
-    // }
+
+    if (speed > 0)
+    {
+        uapi_gpio_set_val(3, GPIO_LEVEL_HIGH);  // AIN1 -> 右轮
+        uapi_gpio_set_val(6, GPIO_LEVEL_LOW);  // AIN2
+    }
+    else
+    {
+        uapi_gpio_set_val(6, GPIO_LEVEL_HIGH);  // AIN1 -> 右轮
+        uapi_gpio_set_val(3, GPIO_LEVEL_LOW);  // AIN2
+        speed = -speed;
+    }
     if (speed > 100) speed = 100;
 
     uint32_t high = speed * 10;
