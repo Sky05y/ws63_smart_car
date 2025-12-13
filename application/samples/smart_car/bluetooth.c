@@ -71,56 +71,35 @@ errcode_t usr_uart_init_config(void)
     return errcode;
 }
 
-int* usr_uart_read_data(void)
+char usr_uart_read_data(void)
 {
-    static int arr[2] = {50, 50};   // 默认值（摇杆中点）
+    static char result = '0';   // 默认返回值
+    static char last = 0;       // 前一个字节
 
-    int len;
-    unsigned char g_test_uart_rx_buffer[64];
-
-    len = uapi_uart_read(UART_BUS_1, g_test_uart_rx_buffer, 64, 0);
+    unsigned char buf[64];
+    int len = uapi_uart_read(UART_BUS_1, buf, 64, 0);
 
     if (len <= 0) {
-        return arr;     // 没数据也要 return
+        return result;
     }
 
-    printf("read data len=%d\r\n", len);
-    printf("raw data: ");
     for (int i = 0; i < len; i++) {
-        printf("0x%02X ", g_test_uart_rx_buffer[i]);
-    }
-    printf("\r\n");
+        char c = buf[i];
 
-    /* ====== 解析 ASCII 数据为 X 和 Y ====== */
-
-    int i = 0;
-    while (i < len) {
-
-        if (g_test_uart_rx_buffer[i] == 'X') {
-
-            // 检查是否有完整格式： X12Y34
-            if (i + 5 < len && g_test_uart_rx_buffer[i+3] == 'Y') {
-
-                int x = (g_test_uart_rx_buffer[i+1] - '0') * 10 +
-                         (g_test_uart_rx_buffer[i+2] - '0');
-
-                int y = (g_test_uart_rx_buffer[i+4] - '0') * 10 +
-                         (g_test_uart_rx_buffer[i+5] - '0');
-
-                printf("[PARSE] X=%d, Y=%d\r\n", x, y);
-
-                arr[0] = x;
-                arr[1] = y;
-
-                return arr; // 成功解析 return
-            }
+        if (last == 'L' && c != '*') {
+            // 记录中间这个字符为等待确认的字符
+            result = c;
         }
 
-        i++;
+        if (c == '*') {
+            // 收到完整帧，result 已经是那个字符
+            return result;
+        }
+
+        last = c;
     }
 
-    // 走到这里说明没有解析到有效 X/Y
-    return arr;
+    return result;   // 未组成完整帧，则返回上一次的值
 }
 int usr_uart_write_data(unsigned int size, char* buff)  
 {  

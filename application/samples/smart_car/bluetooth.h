@@ -23,7 +23,7 @@ void usr_uart_io_config(void);
 errcode_t usr_uart_init_config(void);
 
 /* UART 读写接口 */
-int* usr_uart_read_data(void);
+char usr_uart_read_data(void);
 int usr_uart_write_data(unsigned int size, char* buff);
 
 /* UART 全局接收缓冲区声明（与 .c 内部一致） */
