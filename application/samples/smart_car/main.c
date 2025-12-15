@@ -148,13 +148,13 @@ static void *main_task(const char *arg)
                 break;
 
             case 'w':   // 前进
-                set_left_speed(g_speed_value);
-                set_right_speed(g_speed_value);
+                set_left_speed(-g_speed_value);
+                set_right_speed(-g_speed_value);
                 break;
 
             case 's':   // 后退
-                set_left_speed(-g_speed_value);
-                set_right_speed(-g_speed_value);
+                set_left_speed(g_speed_value);
+                set_right_speed(g_speed_value);
                 break;
 
             case 'a':   // 左转
