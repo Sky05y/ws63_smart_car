@@ -18,7 +18,8 @@ static void *main_task(const char *arg)
     UNUSED(arg);
 
     motor_init();          // 初始化PWM电机驱动
-    track_init(9);
+    errcode_t ret =  track_init(9);
+    printf("track init 9 ret=%d\n", ret);
     track_init(10);
     track_init(11);
     track_init(12);        // 初始化红外循迹传感器
@@ -62,47 +63,57 @@ static void *main_task(const char *arg)
     // 设置速度
     set_left_speed(50);
     set_right_speed(50);
-    osDelay(300);
+    osDelay(30);
     set_left_speed(0);
     set_right_speed(0);   
     osDelay(300); 
-    while(1){
-        char p = usr_uart_read_data();   // 读取UART数据
-        printf("Received: %c\n", p);
-        if (p == '0') 
-        {
-            set_left_speed(0);
-            set_right_speed(0);
-            osDelay(10);
-        }
-        else if (p == 'w')
-        {
-            set_left_speed(-80);
-            set_right_speed(-80);
-            osDelay(10);
-        }
-        else if (p == 's')
-        {
-            set_left_speed(80);
-            set_right_speed(80);
-            osDelay(10);
-        }
-        else if (p == 'a')
-        {
-            set_left_speed(-75);
-            set_right_speed(75);
-            osDelay(10);
-        }
-        else if (p == 'd')
-        {
-            set_left_speed(75);
-            set_right_speed(-75);
-            osDelay(10);
+    while (1)
+    {
+        usr_uart_read_data();
+        /* 速度调节 */
+        if (g_ctrl_mode == 'S') {
+            // 限幅保护
+            if (g_speed_value > 99) g_speed_value = 99;
         }
 
+        /* 方向控制 */
+        else if (g_ctrl_mode == 'L') {
 
-        // osDelay(10);
+            switch (g_dir_value) {
+
+            case '0':
+                set_left_speed(0);
+                set_right_speed(0);
+                break;
+
+            case 'w':   // 前进
+                set_left_speed(g_speed_value);
+                set_right_speed(g_speed_value);
+                break;
+
+            case 's':   // 后退
+                set_left_speed(-g_speed_value);
+                set_right_speed(-g_speed_value);
+                break;
+
+            case 'a':   // 左转
+                set_left_speed(-g_speed_value);
+                set_right_speed(g_speed_value);
+                break;
+
+            case 'd':   // 右转
+                set_left_speed(g_speed_value);
+                set_right_speed(-g_speed_value);
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        osDelay(10);
     }
+
     return NULL;
 }
 

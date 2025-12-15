@@ -16,6 +16,10 @@
 extern "C" {
 #endif
 
+extern volatile char g_ctrl_mode;
+extern volatile char g_dir_value;
+extern volatile int  g_speed_value;
+
 /* IO 配置函数 */
 void usr_uart_io_config(void);
 

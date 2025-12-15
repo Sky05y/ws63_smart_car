@@ -8,6 +8,10 @@
 #define UART_DATA_BITS  8
 #define UART_STOP_BITS  1
 #define UART_PARITY_BIT 0
+
+volatile char g_ctrl_mode = 0;     // 'L' or 'S'
+volatile char g_dir_value = 0;     // w s a d 0
+volatile int  g_speed_value = 80;  // 00~99 默认速度
 void usr_uart_io_config(void)
 {  
     /* 如下IO复用配置，也可集中在SDK中的usr_io_init函数中进行配置 */  
@@ -71,36 +75,55 @@ errcode_t usr_uart_init_config(void)
     return errcode;
 }
 
-char usr_uart_read_data(void)
+void usr_uart_read_data(void)
 {
-    static char result = '0';   // 默认返回值
-    static char last = 0;       // 前一个字节
+    static char frame[5];
+    static int pos = 0;
 
     unsigned char buf[64];
     int len = uapi_uart_read(UART_BUS_1, buf, 64, 0);
-
-    if (len <= 0) {
-        return result;
-    }
+    if (len <= 0) return;
 
     for (int i = 0; i < len; i++) {
         char c = buf[i];
 
-        if (last == 'L' && c != '*') {
-            // 记录中间这个字符为等待确认的字符
-            result = c;
+        /* 帧起始 */
+        if (c == 'L' || c == 'S') {
+            pos = 0;
+            frame[pos++] = c;
+            continue;
         }
 
-        if (c == '*') {
-            // 收到完整帧，result 已经是那个字符
-            return result;
+        if (pos > 0) {
+            frame[pos++] = c;
         }
 
-        last = c;
+        /* Lx* */
+        if (pos == 3 && frame[0] == 'L' && frame[2] == '*') {
+            g_ctrl_mode = 'L';
+            g_dir_value = frame[1];
+            pos = 0;
+        }
+
+        /* Sxx* */
+        else if (pos == 4 && frame[0] == 'S' && frame[3] == '*') {
+            if (frame[1] >= '0' && frame[1] <= '9' &&
+                frame[2] >= '0' && frame[2] <= '9') {
+
+                g_ctrl_mode = 'S';
+                g_speed_value =
+                    (frame[1] - '0') * 10 + (frame[2] - '0');
+            }
+            pos = 0;
+        }
+
+        /* 防止异常 */
+        if (pos >= 5) {
+            pos = 0;
+        }
     }
-
-    return result;   // 未组成完整帧，则返回上一次的值
 }
+
 int usr_uart_write_data(unsigned int size, char* buff)  
 {  
     unsigned char tx_buff[10] = { 0 };  
