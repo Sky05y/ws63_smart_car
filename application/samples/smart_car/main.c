@@ -6,6 +6,7 @@
 #include "track.h"
 #include "bluetooth.h"
 #include "led.h"
+#include "buzzer.h"
 int map_10_99_to_neg99_99(int val)
 {
     if (val < 10) val = 10;
@@ -63,11 +64,17 @@ static void *main_task(const char *arg)
 {
     UNUSED(arg);
 
+    // buzzer_init();
+    // buzzer_play_song(); 
+
+    // osDelay(2000);
+
     motor_init();          // 初始化PWM电机驱动
+
     errcode_t ret =  track_init(9);
     printf("track init 9 ret=%d\n", ret);
-    track_init(10);
-    track_init(11);
+    // track_init(10);
+    // track_init(11);
     // track_init(12);        // 初始化红外循迹传感器
 
     usr_uart_io_config();     // 配置UART引脚
@@ -115,6 +122,14 @@ static void *main_task(const char *arg)
     osDelay(300); 
     while (1)
     {
+        if(get_track_status(9) == 1)
+        {
+            printf("detect\n");
+        }
+        else
+        {
+            printf("not detect\n");
+        }
         usr_uart_read_data();
         /* 速度调节 */
         if (g_ctrl_mode == 'S') {

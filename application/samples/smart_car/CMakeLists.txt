@@ -4,6 +4,7 @@
         ${CMAKE_CURRENT_SOURCE_DIR}/track.c
         ${CMAKE_CURRENT_SOURCE_DIR}/bluetooth.c
         ${CMAKE_CURRENT_SOURCE_DIR}/led.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/buzzer.c
     )
 
     set(PUBLIC_HEADER_LIST
