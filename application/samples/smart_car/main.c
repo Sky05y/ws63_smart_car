@@ -7,6 +7,107 @@
 #include "bluetooth.h"
 #include "led.h"
 #include "buzzer.h"
+void remote_control_task(void)
+{
+    /* 速度调节 */
+    if (g_ctrl_mode == 'S') {
+        if (g_speed_value > 99) g_speed_value = 99;
+    }
+
+    /* 方向控制 */
+    else if (g_ctrl_mode == 'L') {
+
+        switch (g_dir_value) {
+
+        case '0':
+            set_left_speed(0);
+            set_right_speed(0);
+            break;
+
+        case 'w':   // 前进
+            set_left_speed(-g_speed_value);
+            set_right_speed(-g_speed_value);
+            break;
+
+        case 's':   // 后退
+            set_left_speed(g_speed_value);
+            set_right_speed(g_speed_value);
+            break;
+
+        case 'a':   // 左转
+            set_left_speed(-g_speed_value);
+            set_right_speed(g_speed_value);
+            break;
+
+        case 'd':   // 右转
+            set_left_speed(g_speed_value);
+            set_right_speed(-g_speed_value);
+            break;
+
+        default:
+            break;
+        }
+    }
+}
+
+void obstacle_avoid_task(void)
+{
+    int left  = get_track_status(9);   // 左
+    int front = get_track_status(10);  // 前
+    int right = get_track_status(11);  // 右
+
+    int speed = 70;
+
+    /* 全通：前进 */
+    if (left == 1 && front == 1 && right == 1) {
+        set_left_speed(-speed);
+        set_right_speed(-speed);
+        return;
+    }
+
+    /* 左侧有障碍 → 右转 */
+    if (left == 0) {
+        set_left_speed(speed);
+        set_right_speed(-speed);
+        return;
+    }
+
+    /* 右侧有障碍 → 左转 */
+    if (right == 0) {
+        set_left_speed(-speed);
+        set_right_speed(speed);
+        return;
+    }
+
+    /* 正前方有障碍 */
+    if (front == 0) {
+
+        /* 尝试左绕 */
+        if (left == 1) {
+            set_left_speed(-speed);
+            set_right_speed(speed);
+            return;
+        }
+
+        /* 尝试右绕 */
+        if (right == 1) {
+            set_left_speed(speed);
+            set_right_speed(-speed);
+            return;
+        }
+
+        /* 三面受阻 → 后退 */
+        set_left_speed(speed);
+        set_right_speed(speed);
+        osDelay(300);
+
+        /* 掉头 */
+        set_left_speed(speed);
+        set_right_speed(-speed);
+        osDelay(500);
+    }
+}
+
 int map_10_99_to_neg99_99(int val)
 {
     if (val < 10) val = 10;
@@ -73,8 +174,8 @@ static void *main_task(const char *arg)
 
     errcode_t ret =  track_init(9);
     printf("track init 9 ret=%d\n", ret);
-    // track_init(10);
-    // track_init(11);
+    track_init(10);
+    track_init(11);
     // track_init(12);        // 初始化红外循迹传感器
 
     usr_uart_io_config();     // 配置UART引脚
@@ -100,76 +201,22 @@ static void *main_task(const char *arg)
     uapi_gpio_set_val(8, GPIO_LEVEL_LOW);  // BIN2
     osDelay(200);
 
-    // uapi_pin_set_mode(5, HAL_PIO_FUNC_GPIO);
-    // uapi_gpio_set_dir(5, GPIO_DIRECTION_OUTPUT);        
-    // uapi_gpio_set_val(5, GPIO_LEVEL_LOW);  // BIN2
-
-    // uapi_pin_set_mode(7, HAL_PIO_FUNC_GPIO);
-    // uapi_gpio_set_dir(7, GPIO_DIRECTION_OUTPUT);        
-    // uapi_gpio_set_val(7, GPIO_LEVEL_HIGH);   // AIN2
-
-
-    // uapi_pin_set_mode(8, HAL_PIO_FUNC_GPIO);
-    // uapi_gpio_set_dir(8, GPIO_DIRECTION_OUTPUT);        
-    // uapi_gpio_set_val(8, GPIO_LEVEL_LOW);  // AIN1 -> 右轮
-
     // 设置速度
     set_left_speed(50);
     set_right_speed(50);
-    osDelay(30);
+    osDelay(60);
     set_left_speed(0);
     set_right_speed(0);   
     osDelay(300); 
     while (1)
     {
-        if(get_track_status(9) == 1)
-        {
-            printf("detect\n");
-        }
-        else
-        {
-            printf("not detect\n");
-        }
         usr_uart_read_data();
         /* 速度调节 */
-        if (g_ctrl_mode == 'S') {
-            // 限幅保护
-            if (g_speed_value > 99) g_speed_value = 99;
+        if (g_work_mode == 'R') {
+            remote_control_task();
         }
-
-        /* 方向控制 */
-        else if (g_ctrl_mode == 'L') {
-
-            switch (g_dir_value) {
-
-            case '0':
-                set_left_speed(0);
-                set_right_speed(0);
-                break;
-
-            case 'w':   // 前进
-                set_left_speed(-g_speed_value);
-                set_right_speed(-g_speed_value);
-                break;
-
-            case 's':   // 后退
-                set_left_speed(g_speed_value);
-                set_right_speed(g_speed_value);
-                break;
-
-            case 'a':   // 左转
-                set_left_speed(-g_speed_value);
-                set_right_speed(g_speed_value);
-                break;
-
-            case 'd':   // 右转
-                set_left_speed(g_speed_value);
-                set_right_speed(-g_speed_value);
-                break;
-
-            default:
-                break;
-            }
+        else if (g_work_mode == 'Y') {
+            obstacle_avoid_task();
         }
 
         osDelay(10);

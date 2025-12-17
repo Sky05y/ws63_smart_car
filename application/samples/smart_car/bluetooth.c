@@ -12,6 +12,8 @@
 volatile char g_ctrl_mode = 0;     // 'L' or 'S'
 volatile char g_dir_value = 0;     // w s a d 0
 volatile int  g_speed_value = 80;  // 00~99 默认速度
+volatile char g_work_mode = 'R';   // 'R' 遥控器模式，'Y' 避障模式
+
 void usr_uart_io_config(void)
 {  
     /* 如下IO复用配置，也可集中在SDK中的usr_io_init函数中进行配置 */  
@@ -86,7 +88,13 @@ void usr_uart_read_data(void)
 
     for (int i = 0; i < len; i++) {
         char c = buf[i];
-
+        
+        /* 模式切换 */
+        if (c == 'R' || c == 'Y') {
+            g_work_mode = c;
+            pos = 0;
+            continue;
+        }
         /* 帧起始 */
         if (c == 'L' || c == 'S') {
             pos = 0;
