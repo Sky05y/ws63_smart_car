@@ -7,6 +7,8 @@
 #include "bluetooth.h"
 #include "led.h"
 #include "buzzer.h"
+static int l_or_r = 0; // 0: left, 1: right
+
 void remote_control_task(void)
 {
     /* 速度调节 */
@@ -56,7 +58,7 @@ void obstacle_avoid_task(void)
     int front = get_track_status(10);  // 前
     int right = get_track_status(11);  // 右
 
-    int speed = 70;
+    int speed = g_speed_value;
 
     /* 全通：前进 */
     if (left == 1 && front == 1 && right == 1) {
@@ -69,6 +71,9 @@ void obstacle_avoid_task(void)
     if (left == 0) {
         set_left_speed(speed);
         set_right_speed(-speed);
+        osDelay(150);
+        set_left_speed(-speed);
+        set_right_speed(-speed);        
         return;
     }
 
@@ -76,35 +81,35 @@ void obstacle_avoid_task(void)
     if (right == 0) {
         set_left_speed(-speed);
         set_right_speed(speed);
+        osDelay(150);
+        set_left_speed(-speed);
+        set_right_speed(-speed);   
         return;
     }
 
     /* 正前方有障碍 */
-    if (front == 0) {
-
-        /* 尝试左绕 */
-        if (left == 1) {
-            set_left_speed(-speed);
-            set_right_speed(speed);
-            return;
-        }
-
-        /* 尝试右绕 */
-        if (right == 1) {
-            set_left_speed(speed);
-            set_right_speed(-speed);
-            return;
-        }
-
-        /* 三面受阻 → 后退 */
+    if (front == 0) 
+    {
+        /* 后退 */
         set_left_speed(speed);
         set_right_speed(speed);
-        osDelay(300);
+        osDelay(85);
 
         /* 掉头 */
-        set_left_speed(speed);
-        set_right_speed(-speed);
-        osDelay(500);
+        if(l_or_r == 0)
+        {
+            set_left_speed(speed);
+            set_right_speed(-speed);
+            osDelay(150);
+            l_or_r = 1;
+        }
+        else
+        {
+            set_left_speed(-speed);
+            set_right_speed(speed);
+            osDelay(150);
+            l_or_r = 0;
+        }
     }
 }
 

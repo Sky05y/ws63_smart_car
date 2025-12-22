@@ -67,6 +67,9 @@ void buzzer_init(void)
         printf("PWM init fail %d\n", ret);
         return;
     }
+    else {
+        printf("buzzer PWM init success\n");
+    }
 
     cfg.low_time  = 500;
     cfg.high_time = 500;
@@ -78,8 +81,10 @@ void buzzer_init(void)
     printf("Buzzer open ret=%d\n", ret);
 
     uint8_t channel_id = PWM_CHANNEL;
-    uapi_pwm_set_group(PWM_GROUP_ID, &channel_id, 1);
-    uapi_pwm_start_group(PWM_GROUP_ID);
+    ret = uapi_pwm_set_group(PWM_GROUP_ID, &channel_id, 1);
+    printf("Buzzer set group ret=%d\n", ret);
+    ret = uapi_pwm_start_group(PWM_GROUP_ID);
+    printf("Buzzer start group ret=%d\n", ret);
 
     printf("buzzer init done\n");
 }
