@@ -8,6 +8,16 @@
 #define LED_G_GPIO   13
 #define LED_B_GPIO   14
 
+rgb_bit_t led_colors[] = {
+    {1, 0, 0},   // 红   100
+    {0, 1, 0},   // 绿   010
+    {0, 0, 1},   // 蓝   001
+    {1, 1, 0},   // 黄   110
+    {1, 0, 1},   // 紫   101
+    {0, 1, 1},   // 青   011
+    {1, 1, 1},   // 白   111
+};
+
 void led_init(void)
 {
     uapi_pin_init();

@@ -17,6 +17,8 @@ errcode_t track_init(pin_t pin);
 
 int get_track_status(pin_t pin);
 
+void hit_init(void);
+
 #ifdef __cplusplus
 }
 #endif

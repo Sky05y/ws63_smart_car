@@ -77,6 +77,12 @@ errcode_t usr_uart_init_config(void)
     return errcode;
 }
 
+void u_init(void)
+{
+    usr_uart_io_config();
+    usr_uart_init_config();
+}
+
 void usr_uart_read_data(void)
 {
     static char frame[5];

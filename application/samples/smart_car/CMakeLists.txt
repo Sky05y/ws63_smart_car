@@ -5,6 +5,7 @@
         ${CMAKE_CURRENT_SOURCE_DIR}/bluetooth.c
         ${CMAKE_CURRENT_SOURCE_DIR}/led.c
         ${CMAKE_CURRENT_SOURCE_DIR}/buzzer.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/joy.c
     )
 
     set(PUBLIC_HEADER_LIST

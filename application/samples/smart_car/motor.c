@@ -147,3 +147,25 @@ void set_right_speed(int8_t speed)
     uapi_pwm_update_duty_ratio(PWM_RIGHT_CHANNEL, low, high);
     uapi_pwm_start_group(PWM_GROUP_ID2);
 }
+
+void tb6612_init(void)
+{
+    // 4号，5号引脚无法复用为GPIO输出模式
+    uapi_pin_init();
+    uapi_gpio_init();
+    uapi_pin_set_mode(3, PIN_MODE_0);
+    uapi_gpio_set_dir(3, GPIO_DIRECTION_OUTPUT);
+    uapi_gpio_set_val(3, GPIO_LEVEL_HIGH);  // AIN1 -> 右轮
+
+    uapi_pin_set_mode(6, PIN_MODE_0);
+    uapi_gpio_set_dir(6, GPIO_DIRECTION_OUTPUT);
+    uapi_gpio_set_val(6, GPIO_LEVEL_LOW);  // AIN2
+
+    uapi_pin_set_mode(7, PIN_MODE_0);
+    uapi_gpio_set_dir(7, GPIO_DIRECTION_OUTPUT);
+    uapi_gpio_set_val(7, GPIO_LEVEL_HIGH);  // BIN1 -> 左轮
+
+    uapi_pin_set_mode(8, PIN_MODE_0);
+    uapi_gpio_set_dir(8, GPIO_DIRECTION_OUTPUT);
+    uapi_gpio_set_val(8, GPIO_LEVEL_LOW);  // BIN2
+}

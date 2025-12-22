@@ -23,6 +23,13 @@ errcode_t track_init(pin_t pin)
     return ERRCODE_SUCC;
 }
 
+void hit_init(void)
+{
+    track_init(9);
+    track_init(10);
+    track_init(11);
+}
+
 int get_track_status(pin_t pin)
 {
     gpio_level_t lv = uapi_gpio_get_val(pin);
