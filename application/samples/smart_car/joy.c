@@ -3,8 +3,9 @@
 #include "track.h"
 #include "cmsis_os2.h"
 
-static int l_or_r = 0; // 0: left, 1: right
+volatile int l_or_r = 0; // 0: left, 1: right
 volatile int color_mode = 0;
+volatile int color_delay_time = 50;   // 颜色切换延时，默认50
 void remote_control_task(void)
 {
     /* 速度调节 */
@@ -24,7 +25,7 @@ void remote_control_task(void)
 
         case 'w':   // 前进
             set_left_speed(-g_speed_value);
-            set_right_speed(-g_speed_value);
+            set_right_speed(-g_speed_value);           
             break;
 
         case 's':   // 后退
@@ -87,11 +88,10 @@ void obstacle_avoid_task(void)
     if (front == 0) 
     {
         /* 后退 */
-        color_mode = 1;
         set_left_speed(speed);
         set_right_speed(speed);
+        color_delay_time = 10;
         osDelay(85);
-        color_mode = 0;
         /* 掉头 */
         if(l_or_r == 0)
         {
@@ -107,5 +107,7 @@ void obstacle_avoid_task(void)
             osDelay(150);
             l_or_r = 0;
         }
+        color_delay_time = 50;
+        return;
     }
 }

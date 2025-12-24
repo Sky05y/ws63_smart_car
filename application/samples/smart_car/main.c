@@ -23,13 +23,11 @@ static void *led_light(const char *arg)
     {
         if(color_mode == 0)
         {
-        rgb_set_gpio(led_colors[index].r,led_colors[index].g,led_colors[index].b);
-        index++;
-        if (index >= count) 
-        {
-            index = 0;
-        }
-        osDelay(50);   // 每个颜色 500ms
+            rgb_set_gpio(led_colors[index].r,led_colors[index].g,led_colors[index].b);
+            index++;
+            if (index >= count) 
+                index = 0;
+            osDelay(color_delay_time);   // 每个颜色 500ms
         }
         else if(color_mode == 1)
         {
