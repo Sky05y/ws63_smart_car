@@ -8,7 +8,24 @@
 #include "buzzer.h"
 #include "joy.h"
 #include "track.h"
+/* 蜂鸣器任务 */
+static void *buzzer_task(const char *arg)
+{
+    (void)arg;
 
+    uint16_t notes[] = {523, 523, 659, 659, 698, 698, 659, 587, 587, 523, 523, 494, 494, 440, 440, 494};
+    uint32_t durations[] = {300, 300, 300, 300, 300, 300, 600, 300, 300, 300, 300, 300, 300, 300, 300, 600};
+    uint16_t len = sizeof(notes)/sizeof(notes[0]);
+    buzzer_init();
+
+    while (1) 
+    {
+        buzzer_play_music(notes, durations, len);
+        osDelay(500);
+    }
+
+    return NULL;
+}
 /* LED 灯任务 */
 static void *led_light(const char *arg)
 {
@@ -37,23 +54,17 @@ static void *led_light(const char *arg)
 
     return NULL;
 }
-
 /* 主任务 */
 static void *main_task(const char *arg)
 {
     UNUSED(arg);
-
-    // buzzer_init();
-    // buzzer_play_song(); 
-    // osDelay(2000);
 
     motor_init();          // 初始化PWM电机驱动
     hit_init();            // 初始化避障传感器
     u_init();              // 初始化蓝牙串口
     tb6612_init();          // 初始化TB6612电机GPIO驱动
     osDelay(200);
-    // 初始化小车，后退一小段距离
-    set_left_speed(50);
+    set_left_speed(50);     // 初始化小车，后退一小段距离
     set_right_speed(50);
     osDelay(60);
     set_left_speed(0);
@@ -88,8 +99,14 @@ static void main_entry(void)
         .stack_size = 0x2000,
         .priority = osPriorityNormal1
     };
+    osThreadAttr_t attr2 = {
+        .name = "BuzzerTask",
+        .stack_size = 0x2000,
+        .priority = osPriorityNormal2
+    };
     osThreadNew((osThreadFunc_t)main_task, NULL, &attr);
     osThreadNew((osThreadFunc_t)led_light, NULL, &attr1);
+    osThreadNew((osThreadFunc_t)buzzer_task, NULL, &attr2);
 }
 
 app_run(main_entry);

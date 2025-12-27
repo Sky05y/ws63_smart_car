@@ -1,121 +1,104 @@
-#include "motor.h"
-#include "pwm.h"
+#include "buzzer.h"
 #include "pinctrl.h"
-#include "osal_debug.h"
-#include "tcxo.h"
 #include "gpio.h"
+#include "pwm.h"
+#include "tcxo.h"
 #include "cmsis_os2.h"
-#define PWM_GPIO        12
-#define PWM_MODE        1
-#define PWM_CHANNEL     4
-#define PWM_GROUP_ID    3
+#include "osal_debug.h"
 
-#define PWM_TOTAL_COUNT 1000
+/* 蜂鸣器GPIO定义 */
+#define BUZZER_GPIO     12
+#define BUZZER_CHANNEL  4       // PWM通道，根据实际硬件配置调整
+#define PWM_GROUP_ID    0       // PWM组ID，根据实际硬件配置调整
 
-static pwm_config_t cfg;
+/* PWM配置参数 */
+static pwm_config_t buzzer_pwm_cfg = {
+    .low_time = 0,
+    .high_time = 0,
+    .offset_time = 0,
+    .cycles = 0,
+    .repeat = true
+};
 
-/* ================= 音符频率表 =================
- * 用 PWM 周期近似频率（不需要非常准）
- * 数值越小，频率越高，声音越尖
+/**
+ * @brief 停止蜂鸣器发声（占空比设为0）
  */
-#define NOTE_DO   800
-#define NOTE_RE   700
-#define NOTE_MI   600
-#define NOTE_FA   550
-#define NOTE_SO   500
-#define NOTE_LA   450
-#define NOTE_SI   400
-#define NOTE_HDO  350
-
-#define NOTE_REST 0
-
-/* ================= 内部函数 ================= */
-
-/* 设置音符 */
-static void buzzer_set_note(uint32_t period)
+static void buzzer_stop(void)
 {
-    if (period == NOTE_REST) {
-        uapi_pwm_stop(PWM_GPIO);
-        return;
-    }
-
-    cfg.high_time = period / 2;
-    cfg.low_time  = period / 2;
-    cfg.offset_time = 0;
-    cfg.cycles = 0;
-    cfg.repeat = true;
-
-    uapi_pwm_update_duty_ratio(PWM_CHANNEL,
-                               cfg.low_time,
-                               cfg.high_time);
-
+    buzzer_pwm_cfg.high_time = 0;
+    buzzer_pwm_cfg.low_time = 1000;
+    uapi_pwm_close(BUZZER_CHANNEL);
+    uapi_pwm_open(BUZZER_CHANNEL, &buzzer_pwm_cfg);
     uapi_pwm_start_group(PWM_GROUP_ID);
 }
 
-/* ================= 初始化 ================= */
-
 void buzzer_init(void)
 {
-    errcode_t ret;
-
-    ret = uapi_pin_set_mode(PWM_GPIO, PWM_MODE);
-    printf("set buzzer pin mode ret=%d\n", ret);
-
+    uapi_pin_init();
+    uapi_pin_set_mode(BUZZER_GPIO, PIN_MODE_1);
     uapi_pwm_deinit();
-    ret = uapi_pwm_init();
-    if (ret != ERRCODE_SUCC) {
-        printf("PWM init fail %d\n", ret);
-        return;
-    }
-    else {
-        printf("buzzer PWM init success\n");
-    }
+    uapi_pwm_init();
 
-    cfg.low_time  = 500;
-    cfg.high_time = 500;
-    cfg.offset_time = 0;
-    cfg.cycles = 0;
-    cfg.repeat = true;
+    buzzer_pwm_cfg.low_time = 1000;  // 初始低电平时间
+    buzzer_pwm_cfg.high_time = 0;    // 初始高电平时间（0表示关闭）
+    uapi_pwm_open(BUZZER_CHANNEL, &buzzer_pwm_cfg);
 
-    ret = uapi_pwm_open(PWM_CHANNEL, &cfg);
-    printf("Buzzer open ret=%d\n", ret);
-
-    uint8_t channel_id = PWM_CHANNEL;
-    ret = uapi_pwm_set_group(PWM_GROUP_ID, &channel_id, 1);
-    printf("Buzzer set group ret=%d\n", ret);
-    ret = uapi_pwm_start_group(PWM_GROUP_ID);
-    printf("Buzzer start group ret=%d\n", ret);
-
-    printf("buzzer init done\n");
+    uint8_t channel_id = BUZZER_CHANNEL;
+    uapi_pwm_set_group(PWM_GROUP_ID, &channel_id, 1);
+    uapi_pwm_start_group(PWM_GROUP_ID);
 }
 
-/* ================= 一首测试歌曲 =================
- * 歌名：小星星（前半段）
- * Do Do So So La La So
- * Fa Fa Mi Mi Re Re Do
- */
-void buzzer_play_song(void)
+void buzzer_play_tone(uint16_t frequency, uint32_t duration_ms)
 {
-    const uint16_t song[] = {
-        NOTE_DO, NOTE_DO, NOTE_SO, NOTE_SO,
-        NOTE_LA, NOTE_LA, NOTE_SO, NOTE_REST,
-        NOTE_FA, NOTE_FA, NOTE_MI, NOTE_MI,
-        NOTE_RE, NOTE_RE, NOTE_DO
-    };
+    /* 频率为0时直接停止 */
+    if (frequency == 0) {
+        buzzer_stop();
+        return;
+    }
 
-    const uint16_t duration[] = {
-        300,300,300,300,
-        300,300,600,200,
-        300,300,300,300,
-        300,300,600
-    };
+    /* 计算PWM周期（单位：微秒），避免除0错误 */
+    uint32_t period_us = 1000000 / frequency;
+    if (period_us == 0) {
+        printf("Invalid frequency: %d Hz\n", frequency);
+        return;
+    }
 
-    int len = sizeof(song) / sizeof(song[0]);
+    /* 占空比50%，高低电平时间各为周期的一半 */
+    buzzer_pwm_cfg.high_time = period_us / 2;
+    buzzer_pwm_cfg.low_time = period_us - buzzer_pwm_cfg.high_time;
 
-    for (int i = 0; i < len; i++) {
-        buzzer_set_note(song[i]);
-        osDelay(duration[i]);
-        uapi_pwm_stop(PWM_GPIO);
-        osDelay(50);
+    /* 更新PWM配置并重启PWM组 */
+    /*uapi_pwm_close(BUZZER_CHANNEL);*/
+    uapi_pwm_open(BUZZER_CHANNEL, &buzzer_pwm_cfg);
+
+    uapi_pwm_start_group(PWM_GROUP_ID); // 启动整个组而非单个GPIO
+
+    /* 播放指定时长后停止 */
+    if (duration_ms > 0) {
+        uapi_tcxo_delay_ms(duration_ms);
+        buzzer_stop(); // 播放完成后停止发声
+    }
+}
+
+/**
+ * 播放一段旋律
+ * @param notes 音符数组（频率）
+ * @param durations 时长数组（毫秒）
+ * @param length 音符数量
+ */
+void buzzer_play_music(const uint16_t *notes, const uint32_t *durations, uint16_t length)
+{
+    if (notes == NULL || durations == NULL || length == 0) {
+        printf("Invalid music params!\n");
+        return;
+    }
+
+    for (uint16_t i = 0; i < length; i++) {
+        // printf("Play note: %d Hz, duration: %d ms\n", notes[i], durations[i]);
+        buzzer_play_tone(notes[i], durations[i]);
+        // 音符间短暂停顿（避免连音）
+        if (i < length - 1) { // 最后一个音符后不额外停顿
+           uapi_tcxo_delay_ms(50);
+        }
     }
 }
