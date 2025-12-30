@@ -2,10 +2,101 @@
 #include "bluetooth.h"
 #include "track.h"
 #include "cmsis_os2.h"
+#include "buzzer.h"
 
 volatile int l_or_r = 0; // 0: left, 1: right
 volatile int color_mode = 0;
 volatile int color_delay_time = 50;   // 颜色切换延时，默认50
+
+typedef struct {    // 歌曲结构体
+    const uint16_t *notes;
+    const uint32_t *durations;
+    uint16_t length;
+} music_t;
+
+/* ===== 曲子 1：简单提示音 ===== */
+static const uint16_t music_beep_notes[] = {
+    NOTE_C5, NOTE_C5, REST, NOTE_C5
+};
+
+static const uint32_t music_beep_durations[] = {
+    200, 200, 100, 300
+};
+
+/* ===== 曲子 2：你现在用的那首 ===== */
+static const uint16_t music_demo_notes[] = {
+    523, 523, 659, 659, 698, 698, 659,
+    587, 587, 523, 523, 494, 494, 440, 440, 494
+};
+
+static const uint32_t music_demo_durations[] = {
+    300, 300, 300, 300, 300, 300, 600,
+    300, 300, 300, 300, 300, 300, 300, 300, 600
+};
+
+/* ===== 曲子 3：晴天（副歌简化版）===== */
+static const uint16_t music_qingtian_notes[] = {
+    659, 784, 880,
+    880, 784, 659,
+    587, 659,
+
+    659, 784, 880,
+    880, 784, 659,
+    587, 659,
+
+    784, 880, 1047,
+    880, 784, 659,
+    587, 659,
+    0
+};
+
+static const uint32_t music_qingtian_durations[] = {
+    300, 300, 500,
+    300, 300, 500,
+    300, 500,
+
+    300, 300, 500,
+    300, 300, 500,
+    300, 500,
+
+    300, 300, 600,
+    300, 300, 500,
+    300, 800,
+    300
+};
+static const music_t music_library[] = {
+    {
+        music_beep_notes,
+        music_beep_durations,
+        sizeof(music_beep_notes) / sizeof(uint16_t)
+    },
+    {
+        music_demo_notes,
+        music_demo_durations,
+        sizeof(music_demo_notes) / sizeof(uint16_t)
+    },
+    {
+        music_qingtian_notes,
+        music_qingtian_durations,
+        sizeof(music_qingtian_notes) / sizeof(uint16_t)
+    }
+};
+
+#define MUSIC_COUNT (sizeof(music_library) / sizeof(music_library[0]))  // 曲子数量
+
+const music_t *joy_get_music(uint8_t index) // 获取指定索引的歌曲
+{
+    if (index >= MUSIC_COUNT) {
+        return NULL;
+    }
+    return &music_library[index];
+}
+
+uint8_t joy_get_music_count(void)   // 获取曲库中歌曲数量
+{
+    return MUSIC_COUNT;
+}
+
 void remote_control_task(void)
 {
     /* 速度调节 */

@@ -13,6 +13,7 @@ volatile char g_ctrl_mode = 0;     // 'L' or 'S'
 volatile char g_dir_value = 0;     // w s a d 0
 volatile int  g_speed_value = 80;  // 00~99 默认速度
 volatile char g_work_mode = 'R';   // 'R' 遥控器模式，'Y' 避障模式
+volatile bool is_play_music = true;
 
 void usr_uart_io_config(void)
 {  
@@ -92,12 +93,24 @@ void usr_uart_read_data(void)
     int len = uapi_uart_read(UART_BUS_1, buf, 64, 0);
     if (len <= 0) return;
 
-    for (int i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) 
+    {
         char c = buf[i];
         
         /* 模式切换 */
         if (c == 'R' || c == 'Y') {
             g_work_mode = c;
+            pos = 0;
+            continue;
+        }
+        if (c == 'U'){
+            printf("Receive Music Start Command\r\n");
+            is_play_music = true;
+            pos = 0;
+            continue;
+        }
+        if (c == 'T'){
+            is_play_music = false;
             pos = 0;
             continue;
         }
@@ -107,11 +120,9 @@ void usr_uart_read_data(void)
             frame[pos++] = c;
             continue;
         }
-
         if (pos > 0) {
             frame[pos++] = c;
         }
-
         /* Lx* */
         if (pos == 3 && frame[0] == 'L' && frame[2] == '*') {
             g_ctrl_mode = 'L';

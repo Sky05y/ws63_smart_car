@@ -22,6 +22,24 @@ void remote_control_task(void);
  */
 void obstacle_avoid_task(void);
 
+typedef struct {
+    const uint16_t *notes;       // 音符数组
+    const uint32_t *durations;   // 时长数组
+    uint16_t length;             // 音符数量
+} music_t;
+
+/**
+ * @brief 获取指定索引的歌曲
+ * @param index 歌曲索引（0 ~ joy_get_music_count()-1）
+ * @return 指向 music_t 的指针，非法索引返回 NULL
+ */
+const music_t *joy_get_music(uint8_t index);
+
+/**
+ * @brief 获取曲库中歌曲数量
+ */
+uint8_t joy_get_music_count(void);
+
 #ifdef __cplusplus
 }
 #endif

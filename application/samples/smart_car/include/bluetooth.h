@@ -20,7 +20,7 @@ extern volatile char g_ctrl_mode;
 extern volatile char g_dir_value;
 extern volatile int  g_speed_value;
 extern volatile char g_work_mode;
-
+extern volatile bool is_play_music;
 /* IO 配置函数 */
 void usr_uart_io_config(void);
 

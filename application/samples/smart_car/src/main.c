@@ -12,18 +12,31 @@
 static void *buzzer_task(const char *arg)
 {
     (void)arg;
-
-    uint16_t notes[] = {523, 523, 659, 659, 698, 698, 659, 587, 587, 523, 523, 494, 494, 440, 440, 494};
-    uint32_t durations[] = {300, 300, 300, 300, 300, 300, 600, 300, 300, 300, 300, 300, 300, 300, 300, 600};
-    uint16_t len = sizeof(notes)/sizeof(notes[0]);
+    uint8_t music_index = 0;
+    const music_t *music;
     buzzer_init();
-
-    while (1) 
+    while (1)
     {
-        buzzer_play_music(notes, durations, len);
-        osDelay(500);
+        if (is_play_music)
+        {
+            music = joy_get_music(music_index);
+            if (music != NULL)
+            {
+                buzzer_play_music(
+                    music->notes,
+                    music->durations,
+                    music->length
+                );
+            }
+            /* 播完切下一首 */
+            music_index++;
+            if (music_index >= joy_get_music_count())
+            {
+                music_index = 0;
+            }
+        }
+        osDelay(300);
     }
-
     return NULL;
 }
 /* LED 灯任务 */
@@ -50,6 +63,7 @@ static void *led_light(const char *arg)
         {
             rgb_set_gpio(1,0,0); // 红色常亮，倒车模式
         }
+        osDelay(20);
     }
 
     return NULL;
@@ -82,7 +96,7 @@ static void *main_task(const char *arg)
         {
             obstacle_avoid_task();
         }
-        osDelay(10);
+        osDelay(50);
     }
     return NULL;
 }
@@ -102,7 +116,7 @@ static void main_entry(void)
     osThreadAttr_t attr2 = {
         .name = "BuzzerTask",
         .stack_size = 0x2000,
-        .priority = osPriorityNormal2
+        .priority = osPriorityNormal1
     };
     osThreadNew((osThreadFunc_t)main_task, NULL, &attr);
     osThreadNew((osThreadFunc_t)led_light, NULL, &attr1);
