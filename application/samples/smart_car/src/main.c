@@ -8,6 +8,17 @@
 #include "buzzer.h"
 #include "joy.h"
 #include "track.h"
+/* 蓝牙任务 */
+static void *bluetooth_task(const char *arg)
+{
+    (void)arg;
+    while (1)
+    {
+        usr_uart_read_data();
+        osDelay(10);
+    }
+    return NULL;
+}
 /* 蜂鸣器任务 */
 static void *buzzer_task(const char *arg)
 {
@@ -20,6 +31,7 @@ static void *buzzer_task(const char *arg)
         if (is_play_music)
         {
             music = joy_get_music(music_index);
+            osDelay(10);
             if (music != NULL)
             {
                 buzzer_play_music(
@@ -28,6 +40,7 @@ static void *buzzer_task(const char *arg)
                     music->length
                 );
             }
+            osDelay(20);
             /* 播完切下一首 */
             music_index++;
             if (music_index >= joy_get_music_count())
@@ -35,7 +48,7 @@ static void *buzzer_task(const char *arg)
                 music_index = 0;
             }
         }
-        osDelay(300);
+        osDelay(90);
     }
     return NULL;
 }
@@ -63,7 +76,7 @@ static void *led_light(const char *arg)
         {
             rgb_set_gpio(1,0,0); // 红色常亮，倒车模式
         }
-        osDelay(20);
+        osDelay(40);
     }
 
     return NULL;
@@ -86,8 +99,6 @@ static void *main_task(const char *arg)
     osDelay(300); 
     while (1)
     {
-        usr_uart_read_data();
-        // 选择工作模式
         if (g_work_mode == 'R')
         {
             remote_control_task();
@@ -96,7 +107,7 @@ static void *main_task(const char *arg)
         {
             obstacle_avoid_task();
         }
-        osDelay(50);
+        osDelay(30);
     }
     return NULL;
 }
@@ -111,16 +122,22 @@ static void main_entry(void)
     osThreadAttr_t attr1 = {
         .name = "LedTask",
         .stack_size = 0x2000,
-        .priority = osPriorityNormal1
+        .priority = osPriorityNormal
     };
     osThreadAttr_t attr2 = {
         .name = "BuzzerTask",
+        .stack_size = 0x2000,
+        .priority = osPriorityNormal
+    };
+    osThreadAttr_t attr3 = {
+        .name = "BluetoothTask",
         .stack_size = 0x2000,
         .priority = osPriorityNormal1
     };
     osThreadNew((osThreadFunc_t)main_task, NULL, &attr);
     osThreadNew((osThreadFunc_t)led_light, NULL, &attr1);
     osThreadNew((osThreadFunc_t)buzzer_task, NULL, &attr2);
+    osThreadNew((osThreadFunc_t)bluetooth_task, NULL, &attr3);
 }
 
 app_run(main_entry);
