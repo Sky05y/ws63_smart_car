@@ -5,15 +5,24 @@
 #include <stddef.h>  // 增加NULL指针定义所需的头文件
 
 // 添加音乐音符频率定义（中音区）
-#define NOTE_C4  262   // 哆
-#define NOTE_D4  294   // 来
-#define NOTE_E4  330   // 咪
-#define NOTE_F4  349   // 发
-#define NOTE_G4  392   // 索
-#define NOTE_A4  440   // 拉
-#define NOTE_B4  494   // 西
-#define NOTE_C5  523   // 高音哆
-#define REST     0     // 休止符
+#define REST            0       // 休止符
+#define NOTE_C4         262     // 低音Do
+#define NOTE_D4         294     // 低音Re
+#define NOTE_E4         330     // 低音Mi
+#define NOTE_F4         349     // 低音Fa
+#define NOTE_G4         392     // 低音Sol
+#define NOTE_A4         440     // 低音La
+#define NOTE_B4         494     // 低音Si
+#define NOTE_C5         523     // 中音Do（你代码中用到的NOTE_C5）
+#define NOTE_D5         587     // 中音Re
+#define NOTE_E5         659     // 中音Mi
+#define NOTE_F5         698     // 中音Fa
+#define NOTE_G5         784     // 中音Sol
+#define NOTE_A5         880     // 中音La
+#define NOTE_B5         988     // 中音Si
+#define NOTE_C6         1047    // 高音Do
+#define NOTE_D6         1175
+#define NOTE_E6         1319
 
 #ifdef __cplusplus
 extern "C" {

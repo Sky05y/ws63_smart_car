@@ -40,7 +40,7 @@ static void *buzzer_task(const char *arg)
                     music->length
                 );
             }
-            osDelay(20);
+            osDelay(40);
             /* 播完切下一首 */
             music_index++;
             if (music_index >= joy_get_music_count())
@@ -74,7 +74,35 @@ static void *led_light(const char *arg)
         }
         else if(color_mode == 1)
         {
-            rgb_set_gpio(1,0,0); // 红色常亮，倒车模式
+            rgb_set_gpio(1,0,0); // 红色常亮
+        }
+        else if(color_mode == 2)
+        {
+            rgb_set_gpio(0,1,0); // 绿色常亮
+        }
+        else if(color_mode == 3)
+        {
+            rgb_set_gpio(0,0,1); // 蓝色常亮
+        }
+        else if(color_mode == 4)
+        {
+            rgb_set_gpio(1,1,0); // 黄灯常亮
+        }
+        else if(color_mode == 5)
+        {
+            rgb_set_gpio(1,0,1); // 紫灯常亮
+        }
+        else if(color_mode == 6)
+        {
+            rgb_set_gpio(0,1,1); // 青灯常亮
+        }
+        else if(color_mode == 7)
+        {
+            rgb_set_gpio(1,1,1); // 白灯常亮
+        }
+        else if(color_mode == 8)
+        {
+            rgb_set_gpio(0,0,0); // 关闭LED
         }
         osDelay(40);
     }
@@ -88,7 +116,7 @@ static void *main_task(const char *arg)
 
     motor_init();          // 初始化PWM电机驱动
     hit_init();            // 初始化避障传感器
-    u_init();              // 初始化蓝牙串口
+    usr_uart_init_config(); // 初始化蓝牙串口配置
     tb6612_init();          // 初始化TB6612电机GPIO驱动
     osDelay(200);
     set_left_speed(50);     // 初始化小车，后退一小段距离

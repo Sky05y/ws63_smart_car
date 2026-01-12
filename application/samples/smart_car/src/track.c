@@ -6,7 +6,6 @@
 void gpio_callback_func(pin_t pin, uintptr_t param)  
 {
     unused(param);  
-    // osal_printk("PIN:%d interrupt success. \r\n", pin);  
 }
 
 errcode_t track_init(pin_t pin)

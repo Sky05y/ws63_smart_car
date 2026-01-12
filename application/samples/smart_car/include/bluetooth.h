@@ -21,16 +21,13 @@ extern volatile char g_dir_value;
 extern volatile int  g_speed_value;
 extern volatile char g_work_mode;
 extern volatile bool is_play_music;
-/* IO 配置函数 */
-void usr_uart_io_config(void);
 
 /* UART 初始化 */
-errcode_t usr_uart_init_config(void);
+void usr_uart_init_config(void);
 
 /* UART 读写接口 */
 char usr_uart_read_data(void);
 int usr_uart_write_data(unsigned int size, char* buff);
-void u_init(void);
 
 /* UART 全局接收缓冲区声明（与 .c 内部一致） */
 extern unsigned char g_uart_rx_buff[TEST_UART_RX_BUFF_SIZE];

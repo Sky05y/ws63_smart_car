@@ -3,6 +3,7 @@
 #include "uart.h"
 #include "uart_porting.h"
 #include "osal_debug.h"
+#include "joy.h"
 #define TEST_UART_RX_BUFF_SIZE 64 /* 定义 UART 接收缓存区大小 */  
 #define UART_BAUDRATE   9600
 #define UART_DATA_BITS  8
@@ -13,20 +14,7 @@ volatile char g_ctrl_mode = 0;     // 'L' or 'S'
 volatile char g_dir_value = 0;     // w s a d 0
 volatile int  g_speed_value = 80;  // 00~99 默认速度
 volatile char g_work_mode = 'R';   // 'R' 遥控器模式，'Y' 避障模式
-volatile bool is_play_music = true;
-
-void usr_uart_io_config(void)
-{  
-    /* 如下IO复用配置，也可集中在SDK中的usr_io_init函数中进行配置 */  
-    uapi_pin_set_mode(S_MGPIO15, PIN_MODE_1); /* uart1 tx */  
-    errcode_t tt = uapi_pin_set_mode(S_MGPIO16, PIN_MODE_1); /* uart1 rx */  
-    if (tt != ERRCODE_SUCC) {
-        osal_printk("pin set mode fail\r\n");
-    }
-    else {
-        osal_printk("pin set mode success\r\n");
-    }
-}
+volatile bool is_play_music = false;
 
 unsigned char g_uart_rx_buff[TEST_UART_RX_BUFF_SIZE] = { 0 };  
 uart_buffer_config_t g_uart_buffer_config = {  
@@ -34,54 +22,25 @@ uart_buffer_config_t g_uart_buffer_config = {
     .rx_buffer_size = TEST_UART_RX_BUFF_SIZE  
 };
 
-errcode_t usr_uart_init_config(void)  
-{  
+void usr_uart_init_config(void)  
+{
+    uapi_pin_set_mode(S_MGPIO15, PIN_MODE_1); /* uart1 tx */  
+    uapi_pin_set_mode(S_MGPIO16, PIN_MODE_1); /* uart1 rx */  
     errcode_t errcode;  
-
-    osal_printk("[UART] setting attr...\r\n");
     uart_attr_t attr = {
         .baud_rate = UART_BAUDRATE,
         .data_bits = UART_DATA_BIT_8,
         .stop_bits = UART_STOP_BIT_1,
         .parity = UART_PARITY_NONE
     };
-
-    osal_printk("[UART] attr: baud=%d databits=%d stopbits=%d parity=%d\r\n",
-    attr.baud_rate, attr.data_bits, attr.stop_bits, attr.parity);
-
-    osal_printk("[UART] setting pin config...\r\n");
     uart_pin_config_t pin_config = {  
         .tx_pin = S_MGPIO15, /* uart1 tx */  
         .rx_pin = S_MGPIO16, /* uart1 rx */  
-        // .cts_pin = 0xff,
-        // .rts_pin = 0xff
     };
+    uapi_uart_deinit(UART_BUS_1);
+    uapi_uart_init(UART_BUS_1, &pin_config, &attr, NULL, &g_uart_buffer_config);  
 
-    osal_printk("[UART] pins: TX=%d RX=%d CTS=%d RTS=%d\r\n",
-                pin_config.tx_pin, pin_config.rx_pin,
-                pin_config.cts_pin, pin_config.rts_pin);
-
-    errcode = uapi_uart_deinit(UART_BUS_1);
-
-    osal_printk("[UART] deinit returned: 0x%x\r\n", errcode);
-
-    errcode = uapi_uart_init(UART_BUS_1, &pin_config, &attr, NULL, &g_uart_buffer_config);  
-    if (errcode != ERRCODE_SUCC) {
-        osal_printk("uart init fail\r\n,code=0x%x\r\n", errcode);  
-    }
-    else {
-        osal_printk("uart init success\r\n");
-    }
-
-    osal_printk("=== usr_uart_init_config end ===\r\n");
-
-    return errcode;
-}
-
-void u_init(void)
-{
-    usr_uart_io_config();
-    usr_uart_init_config();
+    return;
 }
 
 void usr_uart_read_data(void)
@@ -97,27 +56,33 @@ void usr_uart_read_data(void)
     {
         char c = buf[i];
         
+        /* 帧起始 */
+        if (c == 'L' || c == 'S') {
+            pos = 0;
+            frame[pos++] = c;
+            continue;
+        }
         /* 模式切换 */
-        if (c == 'R' || c == 'Y') {
+        else if (c == 'R' || c == 'Y') {
             g_work_mode = c;
             pos = 0;
             continue;
         }
-        if (c == 'U'){
+        else if (c == 'U'){
             printf("Receive Music Start Command\r\n");
             is_play_music = true;
             pos = 0;
             continue;
         }
-        if (c == 'T'){
+        else if (c == 'T'){
             is_play_music = false;
             pos = 0;
             continue;
         }
-        /* 帧起始 */
-        if (c == 'L' || c == 'S') {
+        else if (c >= '0' && c <= '8') {
+            // LED 颜色模式设置
+            color_mode = c - '0';
             pos = 0;
-            frame[pos++] = c;
             continue;
         }
         if (pos > 0) {

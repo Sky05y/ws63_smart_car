@@ -8,83 +8,105 @@ volatile int l_or_r = 0; // 0: left, 1: right
 volatile int color_mode = 0;
 volatile int color_delay_time = 50;   // 颜色切换延时，默认50
 
-typedef struct {    // 歌曲结构体
+typedef struct {
     const uint16_t *notes;
     const uint32_t *durations;
     uint16_t length;
 } music_t;
 
-/* ===== 曲子 1：简单提示音 ===== */
-static const uint16_t music_beep_notes[] = {
-    NOTE_C5, NOTE_C5, REST, NOTE_C5
+static const uint16_t jingle_bell_part1_notes[] = {
+    NOTE_E5, NOTE_E5, NOTE_E5,
+    NOTE_E5, NOTE_E5, NOTE_E5,
+    NOTE_E5, NOTE_G5,
+    REST
+};
+static const uint32_t jingle_bell_part1_durations[] = {
+    200, 200, 400,
+    200, 200, 400,
+    200, 400,
+    100
 };
 
-static const uint32_t music_beep_durations[] = {
-    200, 200, 100, 300
+static const uint16_t jingle_bell_part2_notes[] = {
+    NOTE_C5, NOTE_D5, NOTE_E5,
+    NOTE_F5, NOTE_F5, NOTE_F5, NOTE_F5,
+    NOTE_F5, NOTE_E5, NOTE_E5, NOTE_E5, NOTE_E5,
+    REST
+};
+static const uint32_t jingle_bell_part2_durations[] = {
+    200, 200, 400,
+    200, 200, 200, 200,
+    200, 200, 200, 200, 400,
+    100
 };
 
-/* ===== 曲子 2：你现在用的那首 ===== */
-static const uint16_t music_demo_notes[] = {
-    523, 523, 659, 659, 698, 698, 659,
-    587, 587, 523, 523, 494, 494, 440, 440, 494
+static const uint16_t jingle_bell_part3_notes[] = {
+    NOTE_E5, NOTE_E5, NOTE_E5,
+    NOTE_E5, NOTE_E5, NOTE_E5,
+    NOTE_E5, NOTE_G5, NOTE_C5, NOTE_D5, NOTE_E5,
+    REST
+};
+static const uint32_t jingle_bell_part3_durations[] = {
+    200, 200, 400,
+    200, 200, 400,
+    200, 200, 200, 200, 400,
+    100
 };
 
-static const uint32_t music_demo_durations[] = {
-    300, 300, 300, 300, 300, 300, 600,
-    300, 300, 300, 300, 300, 300, 300, 300, 600
+static const uint16_t jingle_bell_part4_notes[] = {
+    NOTE_G5, NOTE_G5, NOTE_G5, NOTE_G5,
+    NOTE_G5, NOTE_F5, NOTE_F5, NOTE_F5, NOTE_F5,
+    NOTE_E5, NOTE_E5, NOTE_E5, NOTE_E5,
+    NOTE_C5, NOTE_D5, NOTE_E5,
+    REST
+};
+static const uint32_t jingle_bell_part4_durations[] = {
+    200, 200, 200, 200,
+    200, 200, 200, 200, 400,
+    200, 200, 200, 200, 400,
+    200, 200, 400,
+    100
 };
 
-/* ===== 曲子 3：晴天（副歌简化版）===== */
-static const uint16_t music_qingtian_notes[] = {
-    659, 784, 880,
-    880, 784, 659,
-    587, 659,
-
-    659, 784, 880,
-    880, 784, 659,
-    587, 659,
-
-    784, 880, 1047,
-    880, 784, 659,
-    587, 659,
-    0
+static const uint16_t jingle_bell_part5_notes[] = {
+    NOTE_E5, NOTE_G5, NOTE_F5, NOTE_D5, NOTE_C5,
+    REST
 };
-
-static const uint32_t music_qingtian_durations[] = {
-    300, 300, 500,
-    300, 300, 500,
-    300, 500,
-
-    300, 300, 500,
-    300, 300, 500,
-    300, 500,
-
-    300, 300, 600,
-    300, 300, 500,
-    300, 800,
-    300
+static const uint32_t jingle_bell_part5_durations[] = {
+    200, 200, 200, 200, 800,
+    100
 };
 static const music_t music_library[] = {
     {
-        music_beep_notes,
-        music_beep_durations,
-        sizeof(music_beep_notes) / sizeof(uint16_t)
+        jingle_bell_part1_notes,
+        jingle_bell_part1_durations,
+        sizeof(jingle_bell_part1_notes) / sizeof(uint16_t)
     },
     {
-        music_demo_notes,
-        music_demo_durations,
-        sizeof(music_demo_notes) / sizeof(uint16_t)
+        jingle_bell_part2_notes,
+        jingle_bell_part2_durations,
+        sizeof(jingle_bell_part2_notes) / sizeof(uint16_t)
     },
     {
-        music_qingtian_notes,
-        music_qingtian_durations,
-        sizeof(music_qingtian_notes) / sizeof(uint16_t)
+        jingle_bell_part3_notes,
+        jingle_bell_part3_durations,
+        sizeof(jingle_bell_part3_notes) / sizeof(uint16_t)
+    },
+    {
+        jingle_bell_part4_notes,
+        jingle_bell_part4_durations,
+        sizeof(jingle_bell_part4_notes) / sizeof(uint16_t)
+    },
+    {
+        jingle_bell_part5_notes,
+        jingle_bell_part5_durations,
+        sizeof(jingle_bell_part5_notes) / sizeof(uint16_t)
     }
 };
 
-#define MUSIC_COUNT (sizeof(music_library) / sizeof(music_library[0]))  // 曲子数量
+#define MUSIC_COUNT (sizeof(music_library) / sizeof(music_library[0]))
 
-const music_t *joy_get_music(uint8_t index) // 获取指定索引的歌曲
+const music_t *joy_get_music(uint8_t index)
 {
     if (index >= MUSIC_COUNT) {
         return NULL;
@@ -92,7 +114,7 @@ const music_t *joy_get_music(uint8_t index) // 获取指定索引的歌曲
     return &music_library[index];
 }
 
-uint8_t joy_get_music_count(void)   // 获取曲库中歌曲数量
+uint8_t joy_get_music_count(void)
 {
     return MUSIC_COUNT;
 }
@@ -198,7 +220,7 @@ void obstacle_avoid_task(void)
             osDelay(150);
             l_or_r = 0;
         }
-        color_delay_time = 50;
+        color_delay_time = 40;
         return;
     }
 }
