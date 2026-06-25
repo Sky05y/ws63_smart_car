@@ -30,6 +30,7 @@
 
 ## 功能展示
 
+【基于BearPi WS63的避障小车 | 蓝牙遥控 + CMSIS-RTOS多线程】 https://www.bilibili.com/video/BV18Q7h6SEa9/?share_source=copy_web&vd_source=c433baf5fc3d8d82f7f73c85e1a2e108
 ### 蓝牙遥控模式
 
 支持：
